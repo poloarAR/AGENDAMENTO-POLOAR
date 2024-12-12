@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciamento de Produtos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #ffffff;
+            color: #000000;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0;
+            color: black;
+        }
+        img {
+             width: 100%; /* Torna a largura responsiva */
+            max-width: 250px; /* Define o tamanho máximo */
+            height: auto; /* Preserva a proporção */
+            background-color: #ffffff;
+            padding: 15px;
+            border-radius: 10px;
+            display: block; /* Evita problemas com alinhamento */
+            margin: 0 auto; /* Centraliza a imagem */
+        }
+        .screen {
+            display: none;
+            margin-top: 10px;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .active {
+            display: block;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+            font-size: 16px;
+        }
+        td {
+            font-size: 14px;
+            color: black;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 10px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .no-data {
+            text-align: center;
+            color: #999;
+        }
+        .menu {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .filter-container {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+        input[type="date"], select {
+            padding: 10px;
+            font-size: 14px;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            width: 200px;
+        }
+        .summary {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 10px;
+        }
+        .summary-card {
+            background-color: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 5px;
+            flex: 1;
+            text-align: center;
+            margin: 0 10px;
+            font-size: 20px;
+            font-weight: bold;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        tbody tr:nth-child(even) {
+            background-color: rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="logo.jpg" alt="Logo da Empresa">
+        <h1>PAINEL DE RECEBIMENTO</h1>
+    </header>
+
+    <div class="menu">
+        <button onclick="showScreen('add-products-screen')">INCLUSÃO DE DADOS LOGISTICA</button>
+        <button onclick="showScreen('view-products-screen')">VISUALIZAR AGENDAMENTO</button>
+    </div>
+
+    <div id="add-products-screen" class="screen active">
+        <h2>Adicionar Produtos</h2>
+        <label for="multiple-products">Adicionar Vários Produtos (Data, Fornecedor, Código, Descrição, Quantidade, Veículos, Status, Local):</label><br>
+        <textarea id="multiple-products" rows="5" cols="80"></textarea><br>
+        <button onclick="authenticateAndAdd()">Adicionar Produtos</button>
+    </div>
+
+    <div id="view-products-screen" class="screen">
+        <h2>Visualizar Produtos</h2>
+
+        <div class="summary">
+            <div class="summary-card" id="total-veiculos-card">
+                Total de Veículos: <span id="total-veiculos">0</span>
+            </div>
+            <div class="summary-card" id="total-produtos-card">
+                Total de Produtos: <span id="total-produtos">0</span>
+            </div>
+        </div>
+
+        <div class="filter-container">
+            <label for="filter-fornecedor">Fornecedor:</label>
+            <select id="filter-fornecedor" onchange="filterProducts()">
+                <option value="">Todos</option>
+                <option value="CARRIER">CARRIER</option>
+                <option value="ELGIN">ELGIN</option>
+                <option value="SAMSUNG">SAMSUNG</option>
+                <option value="FUJITSU">FUJITSU</option>
+                <option value="DAIKIN">DAIKIN</option>
+                <option value="LG">LG</option>
+            </select>
+            <label for="filter-data-from">Data de:</label>
+            <input type="date" id="filter-data-from" onchange="filterProducts()">
+
+            <label for="filter-data-to">Até:</label>
+            <input type="date" id="filter-data-to" onchange="filterProducts()">
+
+            <label for="filter-status">Status:</label>
+            <select id="filter-status" onchange="filterProducts()">
+                <option value="">Todos</option>
+                <option value="AGENDADO">AGENDADO</option>
+                <option value="FALHOU">FALHOU</option>
+                <option value="RECEBIDO">RECEBIDO</option>
+            </select>
+
+            <label for="filter-local">Local:</label>
+            <select id="filter-local" onchange="filterProducts()">
+                <option value="">Todos</option>
+                <option value="EXTREMA">EXTREMA</option>
+                <option value="FRUTAL">FRUTAL</option>
+                <option value="SÃO PAULO">SÃO PAULO</option>
+            </select>
+        </div>
+
+        <table id="product-list">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Fornecedor</th>
+                    <th>Código</th>
+                    <th>Descrição</th>
+                    <th>Quantidade</th>
+                    <th>Veículos</th>
+                    <th>Status</th>
+                    <th>Local</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr><td colspan="9" class="no-data">Nenhum produto adicionado.</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        const AUTH_PASSWORD = "Poloar@24";
+        let products = [];
+
+        function showScreen(screenId) {
+            const screens = document.querySelectorAll('.screen');
+            screens.forEach(screen => screen.classList.remove('active'));
+            const activeScreen = document.getElementById(screenId);
+            activeScreen.classList.add('active');
+            if (screenId === 'view-products-screen') {
+                updateTotals();
+                filterProducts();
+            }
+        }
+
+        function authenticateAndAdd() {
+            const password = prompt("Digite a senha para adicionar produtos:");
+            if (password === AUTH_PASSWORD) {
+                addMultipleProducts();
+            } else {
+                alert("Senha incorreta. A adição de produtos foi cancelada.");
+            }
+        }
+
+        function authenticateAndEditOrDelete(callback) {
+            const password = prompt("Digite a senha para editar ou excluir:");
+            if (password === AUTH_PASSWORD) {
+                callback();
+            } else {
+                alert("Senha incorreta. A operação foi cancelada.");
+            }
+        }
+
+        function addMultipleProducts() {
+            const inputText = document.getElementById('multiple-products').value.trim();
+            if (!inputText) return;
+
+            const rows = inputText.split('\n');
+            rows.forEach(row => {
+                const [data, fornecedor, codigo, descricao, quantidade, veiculos, status, local] = row.split('\t');
+                if (data && fornecedor && codigo && descricao && quantidade && veiculos && status && local) {
+                    const [day, month, year] = data.split('/');
+                    const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                    products.push({ data: formattedDate, fornecedor, codigo, descricao, quantidade: parseInt(quantidade), veiculos: parseInt(veiculos), status, local });
+                }
+            });
+
+            updateProductList();
+            clearFields();
+        }
+
+        function formatDate(dateString) {
+            const [year, month, day] = dateString.split('-');
+            return `${day}/${month}/${year}`;
+        }
+
+        function updateProductList(filteredProducts = products) {
+            const productList = document.getElementById('product-list').getElementsByTagName('tbody')[0];
+            productList.innerHTML = '';
+            if (filteredProducts.length === 0) {
+                productList.innerHTML = '<tr><td colspan="9" class="no-data">Nenhum produto encontrado.</td></tr>';
+                return;
+            }
+
+            filteredProducts.forEach((product, index) => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${formatDate(product.data)}</td>
+                    <td>${product.fornecedor}</td>
+                    <td>${product.codigo}</td>
+                    <td>${product.descricao}</td>
+                    <td>${product.quantidade}</td>
+                    <td>${product.veiculos}</td>
+                    <td>${product.status}</td>
+                    <td>${product.local}</td>
+                    <td>
+                        <button onclick="authenticateAndEditOrDelete(() => editProduct(${index}))">Editar</button>
+                        <button onclick="authenticateAndEditOrDelete(() => deleteProduct(${index}))">Excluir</button>
+                    </td>
+                `;
+                productList.appendChild(row);
+            });
+        }
+
+        function deleteProduct(index) {
+            products.splice(index, 1);
+            updateProductList();
+            updateTotals();
+        }
+
+        function editProduct(index) {
+            const product = products[index];
+            const newStatus = prompt("Editar Status:", product.status);
+            if (newStatus !== null) {
+                product.status = newStatus;
+                updateProductList();
+            }
+        }
+
+        function filterProducts() {
+            const fornecedorFilter = document.getElementById('filter-fornecedor').value;
+            const fromDate = document.getElementById('filter-data-from').value;
+            const toDate = document.getElementById('filter-data-to').value;
+            const statusFilter = document.getElementById('filter-status').value;
+            const localFilter = document.getElementById('filter-local').value;
+
+            const filteredProducts = products.filter(product => {
+                const matchesFornecedor = !fornecedorFilter || product.fornecedor === fornecedorFilter;
+                const matchesDate = (!fromDate || product.data >= fromDate) && (!toDate || product.data <= toDate);
+                const matchesStatus = !statusFilter || product.status === statusFilter;
+                const matchesLocal = !localFilter || product.local === localFilter;
+
+                return matchesFornecedor && matchesDate && matchesStatus && matchesLocal;
+            });
+
+            updateProductList(filteredProducts);
+            updateTotals(filteredProducts);
+        }
+
+        function updateTotals(filteredProducts = products) {
+            const totalVeiculos = filteredProducts.reduce((sum, product) => sum + product.veiculos, 0);
+            const totalProdutos = filteredProducts.reduce((sum, product) => sum + product.quantidade, 0);
+
+            document.getElementById('total-veiculos').textContent = totalVeiculos;
+            document.getElementById('total-produtos').textContent = totalProdutos;
+        }
+
+        function clearFields() {
+            document.getElementById('multiple-products').value = '';
+        }
+    </script>
+</body>
+</html>
